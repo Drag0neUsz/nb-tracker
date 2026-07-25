@@ -1,0 +1,328 @@
+.calendar {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--panel) 88%, var(--ink) 4%);
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.calendar-title {
+  margin: 0 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.view-toggle {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--muted-fill);
+  border: 1px solid var(--line);
+}
+
+.btn.toggle {
+  border: none;
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  background: transparent;
+  box-shadow: none;
+}
+
+.btn.toggle.active {
+  background: var(--panel);
+  box-shadow: 0 1px 2px rgb(20 30 40 / 12%);
+}
+
+.week-grid {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+}
+
+.week-header {
+  display: grid;
+  grid-template-columns: 56px repeat(7, 1fr);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+
+.week-day-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.55rem 0.25rem;
+  font-size: 0.8rem;
+}
+
+.week-day-head.today .dom {
+  background: var(--accent);
+  color: white;
+  border-radius: 999px;
+  width: 1.7rem;
+  height: 1.7rem;
+  display: grid;
+  place-items: center;
+}
+
+.week-day-head .dow {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.68rem;
+}
+
+.week-day-head .dom {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.week-body {
+  display: grid;
+  grid-template-columns: 56px repeat(7, 1fr);
+  position: relative;
+}
+
+.time-gutter {
+  position: relative;
+}
+
+.hour-label {
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-align: right;
+  padding-right: 0.4rem;
+  transform: translateY(-0.45rem);
+}
+
+.week-day-col {
+  position: relative;
+  border-left: 1px solid var(--line);
+}
+
+.hour-line {
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  box-sizing: border-box;
+}
+
+.week-tile {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  z-index: 1;
+  border: 1.5px solid;
+  border-radius: 8px;
+  padding: 0.3rem 0.4rem;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font: inherit;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.week-tile:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.98);
+}
+
+.week-tile.absent {
+  outline: 2px dashed color-mix(in srgb, currentColor 55%, transparent);
+  outline-offset: -3px;
+  opacity: 0.92;
+}
+
+.tile-title {
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.15;
+}
+
+.tile-time {
+  font-size: 0.68rem;
+  opacity: 0.85;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: minmax(92px, 1fr);
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.month-dow {
+  padding: 0.55rem 0.4rem;
+  text-align: center;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+  z-index: 1;
+}
+
+.month-cell {
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 0.3rem;
+  min-height: 92px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.month-cell.muted {
+  background: color-mix(in srgb, var(--muted-fill) 55%, transparent);
+  color: var(--muted);
+}
+
+.month-cell.today {
+  background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+}
+
+.month-date {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0 0.15rem;
+}
+
+.month-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.month-chip {
+  border: 1px solid;
+  border-radius: 4px;
+  padding: 0.1rem 0.28rem;
+  font-size: 0.65rem;
+  font-weight: 650;
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: inherit;
+}
+
+.month-chip.absent {
+  outline: 1.5px dashed color-mix(in srgb, currentColor 50%, transparent);
+  outline-offset: -2px;
+}
+
+.occ-popover {
+  position: fixed;
+  z-index: 40;
+  width: min(280px, calc(100vw - 24px));
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.85rem;
+  box-shadow: 0 16px 40px rgb(20 30 40 / 18%);
+  animation: pop 0.14s ease;
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.occ-popover-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.occ-popover-head strong {
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+
+.badge {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.4rem;
+  border-radius: 999px;
+  background: var(--muted-fill);
+  color: var(--muted);
+}
+
+.occ-meta {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.occ-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 900px) {
+  .calendar-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .week-header,
+  .week-body {
+    grid-template-columns: 44px repeat(7, minmax(72px, 1fr));
+    min-width: 620px;
+  }
+
+  .month-grid {
+    min-width: 560px;
+  }
+}

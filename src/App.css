@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Source+Sans+3:wght@400;550;650;700&display=swap');
+
+:root {
+  --ink: #1c2a33;
+  --muted: #5d6d78;
+  --panel: #f7fafc;
+  --line: #cfd9e1;
+  --muted-fill: #e7eef3;
+  --accent: #1f6f8b;
+  --bg-1: #e8f1f4;
+  --bg-2: #f4efe6;
+  --shadow: 0 10px 30px rgb(28 42 51 / 8%);
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Source Sans 3', 'Segoe UI', sans-serif;
+
+  --tile-green-bg: #d7efe0;
+  --tile-green-border: #3f9a6b;
+  --tile-green-text: #1d5c3c;
+  --tile-orange-bg: #fde3c8;
+  --tile-orange-border: #d47a2c;
+  --tile-orange-text: #8a4510;
+  --tile-red-bg: #f8d4d4;
+  --tile-red-border: #c24b4b;
+  --tile-red-text: #7a1f1f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #cfe4ec 0%, transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, #eadfcb 0%, transparent 50%),
+    linear-gradient(160deg, var(--bg-1), var(--bg-2));
+  background-attachment: fixed;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+.btn {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.86rem;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  background: color-mix(in srgb, var(--accent) 6%, var(--panel));
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn.ghost {
+  background: transparent;
+}
+
+.btn.danger {
+  color: var(--tile-red-text);
+  border-color: color-mix(in srgb, var(--tile-red-border) 45%, var(--line));
+}
+
+.btn.danger.ghost {
+  border-color: transparent;
+}
+
+.btn.active {
+  background: color-mix(in srgb, var(--accent) 12%, var(--panel));
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: 1rem;
+  height: 100%;
+  padding: 1rem;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.app-main {
+  min-width: 0;
+  min-height: 0;
+}
+
+.app-loading {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--muted);
+  font-family: var(--font-display);
+}
+
+@media (max-width: 960px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(420px, 58vh) auto;
+    height: auto;
+    min-height: 100%;
+  }
+}
