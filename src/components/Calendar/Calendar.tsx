@@ -19,6 +19,7 @@ import { useMemo, useState, type MouseEvent } from 'react'
 import type { CalendarView, Occurrence } from '../../types'
 import { useAppStore } from '../../store/AppStore'
 import { tileColorFor, TILE_COLORS } from '../../lib/colors'
+import { isOverAbsenceLimit } from '../../lib/attendance'
 import { OccurrencePopover } from './OccurrencePopover'
 import './Calendar.css'
 
@@ -42,8 +43,44 @@ function minutesSinceDayStart(date: Date) {
   return (date.getHours() - DAY_START_HOUR) * 60 + date.getMinutes()
 }
 
+function NotesIcon() {
+  return (
+    <svg
+      className="tile-notes-icon"
+      viewBox="0 0 16 16"
+      width="12"
+      height="12"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        fill="currentColor"
+        d="M3.5 1.5h7.2L14 4.8V13a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13V3a1.5 1.5 0 0 1 1.5-1.5Zm6.7.9v2.1h2.1L10.2 2.4ZM4.25 7h7.5v1.1h-7.5V7Zm0 2.4h7.5v1.1h-7.5V9.4Zm0 2.4h5v1.1h-5v-1.1Z"
+      />
+    </svg>
+  )
+}
+
+function WarningIcon({ className = 'tile-warning-icon' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 16 16"
+      width="12"
+      height="12"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        fill="currentColor"
+        d="M8.85 1.7a1 1 0 0 0-1.7 0L1.2 12.2A1 1 0 0 0 2.05 13.7h11.9a1 1 0 0 0 .85-1.5L8.85 1.7ZM8 5.4c.35 0 .62.28.6.63l-.2 3.4a.4.4 0 0 1-.8 0l-.2-3.4A.61.61 0 0 1 8 5.4Zm0 6.45a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z"
+      />
+    </svg>
+  )
+}
+
 export function Calendar() {
-  const { state, getCourse, isAbsent } = useAppStore()
+  const { state, getCourse, isAbsent, setSelectedCourseId, getOccurrenceNotes } = useAppStore()
   const [view, setView] = useState<CalendarView>('week')
   const [anchor, setAnchor] = useState(() => new Date())
   const [activeOcc, setActiveOcc] = useState<Occurrence | null>(null)
@@ -76,10 +113,11 @@ export function Calendar() {
   const openPopover = (occ: Occurrence, e: MouseEvent) => {
     e.stopPropagation()
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    setSelectedCourseId(occ.courseFormId)
     setActiveOcc(occ)
     setPopoverPos({
-      x: Math.min(rect.left, window.innerWidth - 280),
-      y: Math.min(rect.bottom + 6, window.innerHeight - 220),
+      x: Math.min(rect.left, window.innerWidth - 300),
+      y: Math.min(rect.bottom + 6, window.innerHeight - 360),
     })
   }
 
@@ -169,11 +207,13 @@ export function Calendar() {
                     )
                     const height = (durationMin / 60) * HOUR_HEIGHT
                     const absent = isAbsent(occ.id, occ.courseFormId)
+                    const hasNotes = getOccurrenceNotes(occ.id, occ.courseFormId).trim().length > 0
+                    const overLimit = course ? isOverAbsenceLimit(course) : false
                     return (
                       <button
                         key={occ.id}
                         type="button"
-                        className={`week-tile${absent ? ' absent' : ''}`}
+                        className={`week-tile${absent ? ' absent' : ''}${hasNotes ? ' has-notes' : ''}${overLimit ? ' over-limit' : ''}`}
                         style={{
                           top,
                           height,
@@ -183,6 +223,8 @@ export function Calendar() {
                         }}
                         onClick={(e) => openPopover(occ, e)}
                       >
+                        {overLimit && <WarningIcon />}
+                        {hasNotes && <NotesIcon />}
                         <span className="tile-title">
                           {course?.shortName ?? course?.name ?? occ.title}
                         </span>
@@ -220,20 +262,24 @@ export function Calendar() {
                     const color = tileColorFor(course, occ.id)
                     const palette = TILE_COLORS[color]
                     const absent = isAbsent(occ.id, occ.courseFormId)
+                    const hasNotes = getOccurrenceNotes(occ.id, occ.courseFormId).trim().length > 0
+                    const overLimit = course ? isOverAbsenceLimit(course) : false
                     return (
                       <button
                         key={occ.id}
                         type="button"
-                        className={`month-chip${absent ? ' absent' : ''}`}
+                        className={`month-chip${absent ? ' absent' : ''}${hasNotes ? ' has-notes' : ''}${overLimit ? ' over-limit' : ''}`}
                         style={{
                           background: palette.bg,
                           borderColor: palette.border,
                           color: palette.text,
                         }}
-                        title={`${occ.title} · ${format(parseISO(occ.start), 'HH:mm')}`}
+                        title={`${occ.title} · ${format(parseISO(occ.start), 'HH:mm')}${hasNotes ? ' · has notes' : ''}${overLimit ? ' · over absence limit' : ''}`}
                         onClick={(e) => openPopover(occ, e)}
                       >
+                        {overLimit && <WarningIcon />}
                         {course?.shortName ?? course?.name?.slice(0, 6) ?? '•'}
+                        {hasNotes && <NotesIcon />}
                       </button>
                     )
                   })}
@@ -252,6 +298,12 @@ export function Calendar() {
           onClose={() => setActiveOcc(null)}
         />
       )}
+
+      <div className="calendar-legend" aria-label="Color legend">
+        <span><i className="swatch green" /> Can skip</span>
+        <span><i className="swatch orange" /> Cap used</span>
+        <span><i className="swatch red" /> Exam</span>
+      </div>
     </section>
   )
 }

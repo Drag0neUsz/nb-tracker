@@ -13,6 +13,7 @@ export function getOverrides(course: CourseForm, occurrenceId: string) {
     course.occurrenceOverrides.find((o) => o.occurrenceId === occurrenceId) ?? {
       occurrenceId,
       tags: [] as CourseForm['occurrenceOverrides'][number]['tags'],
+      notes: '',
     }
   )
 }
@@ -21,6 +22,21 @@ export function isExamOccurrence(course: CourseForm, occurrenceId: string): bool
   return getOverrides(course, occurrenceId).tags.includes('exam')
 }
 
+export function getOccurrenceNotes(course: CourseForm, occurrenceId: string): string {
+  return getOverrides(course, occurrenceId).notes ?? ''
+}
+
+export function isEmptyOverride(override: {
+  tags: CourseForm['occurrenceOverrides'][number]['tags']
+  notes?: string
+}): boolean {
+  return override.tags.length === 0 && !(override.notes ?? '').trim()
+}
+
 export function remainingAbsences(course: CourseForm): number {
   return Math.max(0, course.maxAbsences - countUsedAbsences(course))
+}
+
+export function isOverAbsenceLimit(course: CourseForm): boolean {
+  return countUsedAbsences(course) > course.maxAbsences
 }

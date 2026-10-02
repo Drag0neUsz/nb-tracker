@@ -154,6 +154,63 @@
   transition: transform 0.12s ease, filter 0.12s ease;
 }
 
+.week-tile.has-notes {
+  padding-right: 1.1rem;
+}
+
+.week-tile.over-limit {
+  outline: 2px solid var(--tile-red-border, #c0392b);
+  outline-offset: -2px;
+  padding-left: 1.05rem;
+}
+
+.week-tile.over-limit.absent {
+  outline: 2px solid var(--tile-red-border, #c0392b);
+}
+
+.tile-notes-icon {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.tile-warning-icon {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  color: var(--tile-red-text, #9b1c1c);
+  pointer-events: none;
+}
+
+.month-chip.has-notes {
+  padding-right: 1rem;
+}
+
+.month-chip.over-limit {
+  outline: 1.5px solid var(--tile-red-border, #c0392b);
+  outline-offset: -1px;
+  padding-left: 0.9rem;
+}
+
+.month-chip .tile-notes-icon {
+  top: 50%;
+  right: 3px;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+}
+
+.month-chip .tile-warning-icon {
+  top: 50%;
+  left: 2px;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  color: var(--tile-red-text, #9b1c1c);
+}
+
 .week-tile:hover {
   transform: translateY(-1px);
   filter: brightness(0.98);
@@ -234,6 +291,7 @@
 }
 
 .month-chip {
+  position: relative;
   border: 1px solid;
   border-radius: 4px;
   padding: 0.1rem 0.28rem;
@@ -256,7 +314,7 @@
 .occ-popover {
   position: fixed;
   z-index: 40;
-  width: min(280px, calc(100vw - 24px));
+  width: min(300px, calc(100vw - 24px));
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -304,11 +362,85 @@
   color: var(--muted);
 }
 
+.occ-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.occ-notes textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 4.5rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text);
+  background: var(--bg, #fff);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  line-height: 1.35;
+}
+
+.occ-notes textarea:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent, #2f6fed) 45%, transparent);
+  outline-offset: 1px;
+}
+
 .occ-actions {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
   margin-top: 0.75rem;
+}
+
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  padding: 0.55rem 1rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--panel) 88%, var(--ink) 4%);
+}
+
+.calendar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.calendar-legend .swatch {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 3px;
+  display: inline-block;
+  border: 1px solid transparent;
+}
+
+.calendar-legend .swatch.green {
+  background: var(--tile-green-bg);
+  border-color: var(--tile-green-border);
+}
+
+.calendar-legend .swatch.orange {
+  background: var(--tile-orange-bg);
+  border-color: var(--tile-orange-border);
+}
+
+.calendar-legend .swatch.red {
+  background: var(--tile-red-bg);
+  border-color: var(--tile-red-border);
 }
 
 @media (max-width: 900px) {

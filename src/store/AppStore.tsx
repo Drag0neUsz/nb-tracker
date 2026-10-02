@@ -21,7 +21,9 @@ import { mergeIcsImport, type ParsedIcsImport } from '../lib/ics'
 import {
   countUsedAbsences,
   getAbsenceForOccurrence,
+  getOccurrenceNotes,
   getOverrides,
+  isEmptyOverride,
   isExamOccurrence,
 } from '../lib/attendance'
 
@@ -29,7 +31,7 @@ interface AppStoreValue {
   state: AppState
   ready: boolean
   selectedCourseId: string | null
-  setSelectedCourseId: (id: string | null) => void
+  setSelectedCourseId: (id: string) => void
   importIcs: (parsed: ParsedIcsImport) => void
   clearAll: () => Promise<void>
   updateCourseForm: (id: string, patch: Partial<Pick<CourseForm, 'maxAbsences' | 'notes' | 'name' | 'shortName'>>) => void
@@ -37,6 +39,8 @@ interface AppStoreValue {
   clearAbsence: (occurrenceId: string, courseFormId: string) => void
   setAbsenceStatus: (courseFormId: string, absenceId: string, status: AbsenceStatus) => void
   toggleExamTag: (occurrenceId: string, courseFormId: string) => void
+  setOccurrenceNotes: (occurrenceId: string, courseFormId: string, notes: string) => void
+  getOccurrenceNotes: (occurrenceId: string, courseFormId: string) => string
   getCourse: (id: string) => CourseForm | undefined
   remainingAbsences: (courseFormId: string) => number
   usedAbsences: (courseFormId: string) => number
@@ -55,7 +59,7 @@ export function AppStoreProvider({
 }) {
   const [state, setState] = useState<AppState>(EMPTY_STATE)
   const [ready, setReady] = useState(false)
-  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
+  const [selectedCourseId, setSelectedCourseIdState] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -69,6 +73,22 @@ export function AppStoreProvider({
       cancelled = true
     }
   }, [store])
+
+  // Always keep a course selected when any exist (default: first).
+  useEffect(() => {
+    if (!ready) return
+    const courses = state.courseForms
+    if (courses.length === 0) {
+      if (selectedCourseId !== null) setSelectedCourseIdState(null)
+      return
+    }
+    const stillValid = courses.some((c) => c.id === selectedCourseId)
+    if (!stillValid) setSelectedCourseIdState(courses[0].id)
+  }, [ready, state.courseForms, selectedCourseId])
+
+  const setSelectedCourseId = useCallback((id: string) => {
+    setSelectedCourseIdState(id)
+  }, [])
 
   const persist = useCallback(
     (next: AppState) => {
@@ -88,7 +108,7 @@ export function AppStoreProvider({
   const clearAll = useCallback(async () => {
     await store.clear()
     setState({ ...EMPTY_STATE })
-    setSelectedCourseId(null)
+    setSelectedCourseIdState(null)
   }, [store])
 
   const updateCourseForm = useCallback(
@@ -182,24 +202,62 @@ export function AppStoreProvider({
           const nextTags: OccurrenceTag[] = hasExam
             ? overrides.tags.filter((t) => t !== 'exam')
             : [...overrides.tags, 'exam']
+          const next = {
+            occurrenceId,
+            tags: nextTags,
+            notes: overrides.notes ?? '',
+          }
 
           const without = c.occurrenceOverrides.filter(
             (o) => o.occurrenceId !== occurrenceId,
           )
-          if (nextTags.length === 0) {
+          if (isEmptyOverride(next)) {
             return { ...c, occurrenceOverrides: without }
           }
           return {
             ...c,
-            occurrenceOverrides: [
-              ...without,
-              { occurrenceId, tags: nextTags },
-            ],
+            occurrenceOverrides: [...without, next],
           }
         }),
       })
     },
     [persist, state],
+  )
+
+  const setOccurrenceNotes = useCallback(
+    (occurrenceId: string, courseFormId: string, notes: string) => {
+      persist({
+        ...state,
+        courseForms: state.courseForms.map((c) => {
+          if (c.id !== courseFormId) return c
+          const overrides = getOverrides(c, occurrenceId)
+          const next = {
+            occurrenceId,
+            tags: overrides.tags,
+            notes,
+          }
+          const without = c.occurrenceOverrides.filter(
+            (o) => o.occurrenceId !== occurrenceId,
+          )
+          if (isEmptyOverride(next)) {
+            return { ...c, occurrenceOverrides: without }
+          }
+          return {
+            ...c,
+            occurrenceOverrides: [...without, next],
+          }
+        }),
+      })
+    },
+    [persist, state],
+  )
+
+  const readOccurrenceNotes = useCallback(
+    (occurrenceId: string, courseFormId: string) => {
+      const course = state.courseForms.find((c) => c.id === courseFormId)
+      return course ? getOccurrenceNotes(course, occurrenceId) : ''
+    },
+    [state.courseForms],
   )
 
   const getCourse = useCallback(
@@ -253,6 +311,8 @@ export function AppStoreProvider({
       clearAbsence,
       setAbsenceStatus,
       toggleExamTag,
+      setOccurrenceNotes,
+      getOccurrenceNotes: readOccurrenceNotes,
       getCourse,
       remainingAbsences,
       usedAbsences,
@@ -263,6 +323,7 @@ export function AppStoreProvider({
       state,
       ready,
       selectedCourseId,
+      setSelectedCourseId,
       importIcs,
       clearAll,
       updateCourseForm,
@@ -270,6 +331,8 @@ export function AppStoreProvider({
       clearAbsence,
       setAbsenceStatus,
       toggleExamTag,
+      setOccurrenceNotes,
+      readOccurrenceNotes,
       getCourse,
       remainingAbsences,
       usedAbsences,

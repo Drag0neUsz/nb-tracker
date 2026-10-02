@@ -22,12 +22,15 @@ export function OccurrencePopover({
     clearAbsence,
     toggleExamTag,
     setSelectedCourseId,
+    getOccurrenceNotes,
+    setOccurrenceNotes,
   } = useAppStore()
 
   const course = getCourse(occurrence.courseFormId)
   const absent = isAbsent(occurrence.id, occurrence.courseFormId)
   const exam = isExam(occurrence.id, occurrence.courseFormId)
   const remaining = course ? remainingAbsences(course) : 0
+  const notes = getOccurrenceNotes(occurrence.id, occurrence.courseFormId)
 
   return (
     <div
@@ -51,6 +54,20 @@ export function OccurrencePopover({
           {course.maxAbsences} ({remaining} left)
         </p>
       )}
+
+      <label className="occ-notes">
+        Notes
+        <textarea
+          rows={3}
+          value={notes}
+          placeholder="Homework due, prep, reminders…"
+          onChange={(e) =>
+            setOccurrenceNotes(occurrence.id, occurrence.courseFormId, e.target.value)
+          }
+          onClick={(e) => e.stopPropagation()}
+        />
+      </label>
+
       <div className="occ-actions">
         {absent ? (
           <button

@@ -1,4 +1,4 @@
-export type AbsenceStatus = 'absent' | 'justified' | 'revoked'
+export type AbsenceStatus = 'absent' | 'justified'
 
 export type OccurrenceTag = 'exam'
 
@@ -15,6 +15,7 @@ export interface Absence {
 export interface OccurrenceOverride {
   occurrenceId: string
   tags: OccurrenceTag[]
+  notes?: string
 }
 
 export interface CourseForm {

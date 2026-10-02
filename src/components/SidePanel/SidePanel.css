@@ -147,9 +147,28 @@
   background: color-mix(in srgb, var(--accent) 8%, var(--panel));
 }
 
+.course-item.over-limit {
+  border-color: var(--tile-red-border, #c0392b);
+  box-shadow: inset 0 0 0 1px var(--tile-red-border, #c0392b);
+}
+
+.course-item.over-limit:hover,
+.course-item.over-limit.active {
+  border-color: var(--tile-red-border, #c0392b);
+  background: color-mix(in srgb, var(--tile-red-bg, #fde8e8) 55%, var(--panel));
+}
+
 .course-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   font-size: 0.86rem;
   font-weight: 600;
+}
+
+.course-warning-icon {
+  flex-shrink: 0;
+  color: var(--tile-red-text, #9b1c1c);
 }
 
 .course-stat {
@@ -161,6 +180,10 @@
 
 .course-stat.depleted {
   color: var(--tile-orange-text);
+}
+
+.course-stat.over-limit {
+  color: var(--tile-red-text, #9b1c1c);
 }
 
 .course-detail {
@@ -179,48 +202,28 @@
 
 .absence-row {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.5rem;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.4rem;
   align-items: center;
   font-size: 0.82rem;
 }
 
-.legend {
-  margin-top: auto;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem 0.9rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--line);
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-
-.legend span {
+.absence-remove {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
 }
 
-.swatch {
-  width: 0.7rem;
-  height: 0.7rem;
-  border-radius: 3px;
-  display: inline-block;
-  border: 1px solid transparent;
-}
-
-.swatch.green {
-  background: var(--tile-green-bg);
-  border-color: var(--tile-green-border);
-}
-
-.swatch.orange {
-  background: var(--tile-orange-bg);
-  border-color: var(--tile-orange-border);
-}
-
-.swatch.red {
-  background: var(--tile-red-bg);
-  border-color: var(--tile-red-border);
+.absence-remove:hover {
+  color: var(--danger, #b42318);
+  background: color-mix(in srgb, var(--danger, #b42318) 12%, transparent);
 }

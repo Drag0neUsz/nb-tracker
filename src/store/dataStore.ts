@@ -20,7 +20,14 @@ export class LocalStorageStore implements DataStore {
       }
       return {
         version: 1,
-        courseForms: parsed.courseForms ?? [],
+        courseForms: (parsed.courseForms ?? []).map((course) => ({
+          ...course,
+          absences: (course.absences ?? []).map((absence) => ({
+            ...absence,
+            status:
+              absence.status === 'justified' ? ('justified' as const) : ('absent' as const),
+          })),
+        })),
         occurrences: parsed.occurrences ?? [],
       }
     } catch {
