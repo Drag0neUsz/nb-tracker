@@ -1,0 +1,82 @@
+.add-occ-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(28 42 51 / 42%);
+  backdrop-filter: blur(2px);
+}
+
+.add-occ-modal {
+  width: min(420px, 100%);
+  max-height: min(90vh, 640px);
+  overflow: auto;
+  padding: 1.15rem 1.15rem 1.25rem;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.add-occ-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.add-occ-sub {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.add-occ-modal > .hint {
+  margin: 0.65rem 0 0.85rem;
+}
+
+.add-occ-form .field {
+  margin-bottom: 0.65rem;
+}
+
+.add-occ-form .field input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+}
+
+.add-occ-form .time-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.add-occ-form .check-field {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.65rem;
+  font-size: 0.84rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.add-occ-form .check-field input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent);
+}
+
+.add-occ-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  margin-top: 0.85rem;
+}

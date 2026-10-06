@@ -18,6 +18,7 @@ import {
 import { useMemo, useState, type MouseEvent } from 'react'
 import type { CalendarView, Occurrence } from '../../types'
 import { useAppStore } from '../../store/AppStore'
+import { useLanguage } from '../../i18n/LanguageContext'
 import { tileColorFor, TILE_COLORS } from '../../lib/colors'
 import { isOverAbsenceLimit } from '../../lib/attendance'
 import { OccurrencePopover } from './OccurrencePopover'
@@ -81,6 +82,7 @@ function WarningIcon({ className = 'tile-warning-icon' }: { className?: string }
 
 export function Calendar() {
   const { state, getCourse, isAbsent, setSelectedCourseId, getOccurrenceNotes } = useAppStore()
+  const { t, dateLocale, weekdaysShort } = useLanguage()
   const [view, setView] = useState<CalendarView>('week')
   const [anchor, setAnchor] = useState(() => new Date())
   const [activeOcc, setActiveOcc] = useState<Occurrence | null>(null)
@@ -123,38 +125,38 @@ export function Calendar() {
 
   const title =
     view === 'week'
-      ? `${format(days[0], 'd MMM')} – ${format(days[6], 'd MMM yyyy')}`
-      : format(anchor, 'MMMM yyyy')
+      ? `${format(days[0], 'd MMM', { locale: dateLocale })} – ${format(days[6], 'd MMM yyyy', { locale: dateLocale })}`
+      : format(anchor, 'LLLL yyyy', { locale: dateLocale })
 
   return (
     <section className="calendar" onClick={() => setActiveOcc(null)}>
       <header className="calendar-toolbar">
         <div className="calendar-nav">
-          <button type="button" className="btn ghost" onClick={goPrev} aria-label="Previous">
+          <button type="button" className="btn ghost" onClick={goPrev} aria-label={t('previous')}>
             ‹
           </button>
           <button type="button" className="btn ghost" onClick={goToday}>
-            Today
+            {t('today')}
           </button>
-          <button type="button" className="btn ghost" onClick={goNext} aria-label="Next">
+          <button type="button" className="btn ghost" onClick={goNext} aria-label={t('next')}>
             ›
           </button>
           <h2 className="calendar-title">{title}</h2>
         </div>
-        <div className="view-toggle" role="group" aria-label="Calendar view">
+        <div className="view-toggle" role="group" aria-label={t('calendarView')}>
           <button
             type="button"
             className={view === 'week' ? 'btn toggle active' : 'btn toggle'}
             onClick={() => setView('week')}
           >
-            Week
+            {t('week')}
           </button>
           <button
             type="button"
             className={view === 'month' ? 'btn toggle active' : 'btn toggle'}
             onClick={() => setView('month')}
           >
-            Month
+            {t('month')}
           </button>
         </div>
       </header>
@@ -168,7 +170,7 @@ export function Calendar() {
                 key={day.toISOString()}
                 className={`week-day-head${isToday(day) ? ' today' : ''}`}
               >
-                <span className="dow">{format(day, 'EEE')}</span>
+                <span className="dow">{format(day, 'EEE', { locale: dateLocale })}</span>
                 <span className="dom">{format(day, 'd')}</span>
               </div>
             ))}
@@ -241,7 +243,7 @@ export function Calendar() {
         </div>
       ) : (
         <div className="month-grid">
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
+          {weekdaysShort.map((d) => (
             <div key={d} className="month-dow">
               {d}
             </div>
@@ -264,6 +266,12 @@ export function Calendar() {
                     const absent = isAbsent(occ.id, occ.courseFormId)
                     const hasNotes = getOccurrenceNotes(occ.id, occ.courseFormId).trim().length > 0
                     const overLimit = course ? isOverAbsenceLimit(course) : false
+                    const titleParts = [
+                      occ.title,
+                      format(parseISO(occ.start), 'HH:mm'),
+                      hasNotes ? t('hasNotes') : null,
+                      overLimit ? t('overAbsenceLimit') : null,
+                    ].filter(Boolean)
                     return (
                       <button
                         key={occ.id}
@@ -274,7 +282,7 @@ export function Calendar() {
                           borderColor: palette.border,
                           color: palette.text,
                         }}
-                        title={`${occ.title} · ${format(parseISO(occ.start), 'HH:mm')}${hasNotes ? ' · has notes' : ''}${overLimit ? ' · over absence limit' : ''}`}
+                        title={titleParts.join(' · ')}
                         onClick={(e) => openPopover(occ, e)}
                       >
                         {overLimit && <WarningIcon />}
@@ -299,10 +307,10 @@ export function Calendar() {
         />
       )}
 
-      <div className="calendar-legend" aria-label="Color legend">
-        <span><i className="swatch green" /> Can skip</span>
-        <span><i className="swatch orange" /> Cap used</span>
-        <span><i className="swatch red" /> Exam</span>
+      <div className="calendar-legend" aria-label={t('colorLegend')}>
+        <span><i className="swatch green" /> {t('canSkip')}</span>
+        <span><i className="swatch orange" /> {t('capUsed')}</span>
+        <span><i className="swatch red" /> {t('exam')}</span>
       </div>
     </section>
   )

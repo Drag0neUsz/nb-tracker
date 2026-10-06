@@ -37,6 +37,8 @@ export interface Occurrence {
   title: string
   location?: string
   uid?: string
+  /** User-added date (e.g. exam outside the ICS plan). Kept across ICS re-imports. */
+  manual?: boolean
 }
 
 export interface AppState {

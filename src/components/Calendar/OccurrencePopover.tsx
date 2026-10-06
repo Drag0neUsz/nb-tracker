@@ -1,6 +1,7 @@
 import { format, parseISO } from 'date-fns'
 import type { Occurrence } from '../../types'
 import { useAppStore } from '../../store/AppStore'
+import { useLanguage } from '../../i18n/LanguageContext'
 import { remainingAbsences } from '../../lib/attendance'
 
 export function OccurrencePopover({
@@ -25,6 +26,7 @@ export function OccurrencePopover({
     getOccurrenceNotes,
     setOccurrenceNotes,
   } = useAppStore()
+  const { t, dateLocale } = useLanguage()
 
   const course = getCourse(occurrence.courseFormId)
   const absent = isAbsent(occurrence.id, occurrence.courseFormId)
@@ -37,7 +39,7 @@ export function OccurrencePopover({
       className="occ-popover"
       style={{ left: x, top: y }}
       role="dialog"
-      aria-label="Class actions"
+      aria-label={t('classActions')}
       onClick={(e) => e.stopPropagation()}
     >
       <div className="occ-popover-head">
@@ -45,22 +47,25 @@ export function OccurrencePopover({
         {course?.type && <span className="badge">{course.type}</span>}
       </div>
       <p className="occ-meta">
-        {format(parseISO(occurrence.start), 'EEE d MMM · HH:mm')}
+        {format(parseISO(occurrence.start), 'EEE d MMM · HH:mm', { locale: dateLocale })}
         {occurrence.location ? ` · ${occurrence.location}` : ''}
       </p>
       {course && (
         <p className="occ-meta">
-          Absences: {course.absences.filter((a) => a.status === 'absent').length}/
-          {course.maxAbsences} ({remaining} left)
+          {t('absencesStat', {
+            used: course.absences.filter((a) => a.status === 'absent').length,
+            max: course.maxAbsences,
+            left: remaining,
+          })}
         </p>
       )}
 
       <label className="occ-notes">
-        Notes
+        {t('notes')}
         <textarea
           rows={3}
           value={notes}
-          placeholder="Homework due, prep, reminders…"
+          placeholder={t('occNotesPlaceholder')}
           onChange={(e) =>
             setOccurrenceNotes(occurrence.id, occurrence.courseFormId, e.target.value)
           }
@@ -75,11 +80,11 @@ export function OccurrencePopover({
             className="btn"
             onClick={() => clearAbsence(occurrence.id, occurrence.courseFormId)}
           >
-            Clear absence
+            {t('clearAbsence')}
           </button>
         ) : (
           <button type="button" className="btn danger" onClick={() => markAbsent(occurrence)}>
-            Mark absent
+            {t('markAbsent')}
           </button>
         )}
         <button
@@ -87,7 +92,7 @@ export function OccurrencePopover({
           className={exam ? 'btn active' : 'btn'}
           onClick={() => toggleExamTag(occurrence.id, occurrence.courseFormId)}
         >
-          {exam ? 'Unmark exam' : 'Tag as exam'}
+          {exam ? t('unmarkExam') : t('tagAsExam')}
         </button>
         <button
           type="button"
@@ -97,7 +102,7 @@ export function OccurrencePopover({
             onClose()
           }}
         >
-          Open course
+          {t('openCourse')}
         </button>
       </div>
     </div>

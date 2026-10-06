@@ -77,16 +77,14 @@ export async function fetchIcsFromUrl(url: string): Promise<string> {
   try {
     response = await fetch(url)
   } catch {
-    throw new Error(
-      'Could not download the calendar URL (likely blocked by CORS). Download the .ics file and upload it instead.',
-    )
+    throw new Error('icsCors')
   }
   if (!response.ok) {
-    throw new Error(`Download failed (${response.status}). Try uploading the .ics file instead.`)
+    throw new Error(`icsDownloadFailed:${response.status}`)
   }
   const text = await response.text()
   if (!text.includes('BEGIN:VCALENDAR') && !text.includes('BEGIN:VEVENT')) {
-    throw new Error('URL did not return a valid ICS calendar. Try uploading the file instead.')
+    throw new Error('icsInvalid')
   }
   return text
 }
@@ -195,15 +193,115 @@ export function mergeIcsImport(
 
   const keptIds = new Set(remapped.map((o) => o.id))
   const preserved = existing.occurrences.filter((o) => !keptIds.has(o.id))
-  // Replace occurrences that match imported UIDs for forms we refreshed
+  // Replace ICS occurrences for refreshed forms, but keep user-added dates
   const importedFormIds = new Set(remapped.map((o) => o.courseFormId))
   const preservedOutsideImport = preserved.filter(
     (o) => !importedFormIds.has(o.courseFormId),
+  )
+  const preservedManual = preserved.filter(
+    (o) => o.manual && importedFormIds.has(o.courseFormId),
   )
 
   return {
     version: 1,
     courseForms: forms,
-    occurrences: [...preservedOutsideImport, ...remapped],
+    occurrences: [...preservedOutsideImport, ...preservedManual, ...remapped],
   }
 }
+
+function foldIcsLine(line: string): string {
+  if (line.length <= 75) return line
+  const parts: string[] = []
+  let remaining = line
+  parts.push(remaining.slice(0, 75))
+  remaining = remaining.slice(75)
+  while (remaining.length > 0) {
+    parts.push(` ${remaining.slice(0, 74)}`)
+    remaining = remaining.slice(74)
+  }
+  return parts.join('\r\n')
+}
+
+function escapeIcsText(value: string): string {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\r\n|\n|\r/g, '\\n')
+}
+
+/** Format a Date as UTC ICS datetime: YYYYMMDDTHHMMSSZ */
+function toIcsUtc(iso: string): string {
+  const d = parseISO(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return (
+    `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}` +
+    `T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`
+  )
+}
+
+function buildDescription(course: CourseForm | undefined, occurrence: Occurrence): string | undefined {
+  const parts: string[] = []
+  if (course) {
+    const override = course.occurrenceOverrides.find((o) => o.occurrenceId === occurrence.id)
+    if (override?.tags.includes('exam')) parts.push('Exam')
+    const occNotes = override?.notes?.trim()
+    if (occNotes) parts.push(occNotes)
+    if (course.notes.trim()) parts.push(course.notes.trim())
+  }
+  if (occurrence.manual) parts.push('Added manually in NB Tracker')
+  return parts.length > 0 ? parts.join('\n') : undefined
+}
+
+/** Build a VCALENDAR string from the current app occurrences (including manual dates). */
+export function buildIcsExport(state: AppState): string {
+  const courses = new Map(state.courseForms.map((c) => [c.id, c]))
+  const stamp = toIcsUtc(new Date().toISOString())
+  const lines: string[] = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//NB Tracker//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+  ]
+
+  const sorted = state.occurrences
+    .slice()
+    .sort((a, b) => a.start.localeCompare(b.start))
+
+  for (const occ of sorted) {
+    const course = courses.get(occ.courseFormId)
+    const uid = occ.uid || occ.id
+    const description = buildDescription(course, occ)
+
+    lines.push('BEGIN:VEVENT')
+    lines.push(`UID:${escapeIcsText(uid)}`)
+    lines.push(`DTSTAMP:${stamp}`)
+    lines.push(`DTSTART:${toIcsUtc(occ.start)}`)
+    lines.push(`DTEND:${toIcsUtc(occ.end)}`)
+    lines.push(`SUMMARY:${escapeIcsText(occ.title)}`)
+    if (occ.location) lines.push(`LOCATION:${escapeIcsText(occ.location)}`)
+    if (description) lines.push(`DESCRIPTION:${escapeIcsText(description)}`)
+    lines.push('END:VEVENT')
+  }
+
+  lines.push('END:VCALENDAR')
+  return lines.map(foldIcsLine).join('\r\n') + '\r\n'
+}
+
+export function downloadIcsFile(
+  icsText: string,
+  filename = `nb-tracker-${new Date().toISOString().slice(0, 10)}.ics`,
+): void {
+  const blob = new Blob([icsText], { type: 'text/calendar;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  anchor.rel = 'noopener'
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  URL.revokeObjectURL(url)
+}
+

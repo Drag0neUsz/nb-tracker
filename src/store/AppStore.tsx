@@ -35,6 +35,16 @@ interface AppStoreValue {
   importIcs: (parsed: ParsedIcsImport) => void
   clearAll: () => Promise<void>
   updateCourseForm: (id: string, patch: Partial<Pick<CourseForm, 'maxAbsences' | 'notes' | 'name' | 'shortName'>>) => void
+  addManualOccurrence: (input: {
+    courseFormId: string
+    date: string
+    startTime: string
+    endTime: string
+    title?: string
+    location?: string
+    asExam?: boolean
+  }) => { ok: true } | { ok: false; error: 'invalidRange' | 'missingCourse' }
+  removeOccurrence: (occurrenceId: string, courseFormId: string) => void
   markAbsent: (occurrence: Occurrence) => void
   clearAbsence: (occurrenceId: string, courseFormId: string) => void
   setAbsenceStatus: (courseFormId: string, absenceId: string, status: AbsenceStatus) => void
@@ -127,6 +137,93 @@ export function AppStoreProvider({
                   patch.maxAbsences !== undefined
                     ? Math.max(0, Math.floor(patch.maxAbsences))
                     : c.maxAbsences,
+              }
+            : c,
+        ),
+      })
+    },
+    [persist, state],
+  )
+
+  const addManualOccurrence = useCallback(
+    (input: {
+      courseFormId: string
+      date: string
+      startTime: string
+      endTime: string
+      title?: string
+      location?: string
+      asExam?: boolean
+    }): { ok: true } | { ok: false; error: 'invalidRange' | 'missingCourse' } => {
+      const course = state.courseForms.find((c) => c.id === input.courseFormId)
+      if (!course) return { ok: false, error: 'missingCourse' }
+
+      const [y, m, d] = input.date.split('-').map(Number)
+      const [startH, startM] = input.startTime.split(':').map(Number)
+      const [endH, endM] = input.endTime.split(':').map(Number)
+      if (
+        [y, m, d, startH, startM, endH, endM].some((n) => Number.isNaN(n))
+      ) {
+        return { ok: false, error: 'invalidRange' }
+      }
+
+      const startDate = new Date(y, m - 1, d, startH, startM)
+      const endDate = new Date(y, m - 1, d, endH, endM)
+      if (!(endDate.getTime() > startDate.getTime())) {
+        return { ok: false, error: 'invalidRange' }
+      }
+
+      const start = startDate.toISOString()
+      const end = endDate.toISOString()
+      const occurrenceId = `manual__${createId()}__${start}`
+      const title = input.title?.trim() || course.name
+      const location = input.location?.trim() || undefined
+
+      const occurrence: Occurrence = {
+        id: occurrenceId,
+        courseFormId: course.id,
+        start,
+        end,
+        title,
+        location,
+        manual: true,
+      }
+
+      const nextForms = state.courseForms.map((c) => {
+        if (c.id !== course.id) return c
+        if (!input.asExam) return c
+        return {
+          ...c,
+          occurrenceOverrides: [
+            ...c.occurrenceOverrides.filter((o) => o.occurrenceId !== occurrenceId),
+            { occurrenceId, tags: ['exam' as OccurrenceTag], notes: '' },
+          ],
+        }
+      })
+
+      persist({
+        ...state,
+        courseForms: nextForms,
+        occurrences: [...state.occurrences, occurrence],
+      })
+      return { ok: true }
+    },
+    [persist, state],
+  )
+
+  const removeOccurrence = useCallback(
+    (occurrenceId: string, courseFormId: string) => {
+      persist({
+        ...state,
+        occurrences: state.occurrences.filter((o) => o.id !== occurrenceId),
+        courseForms: state.courseForms.map((c) =>
+          c.id === courseFormId
+            ? {
+                ...c,
+                absences: c.absences.filter((a) => a.occurrenceId !== occurrenceId),
+                occurrenceOverrides: c.occurrenceOverrides.filter(
+                  (o) => o.occurrenceId !== occurrenceId,
+                ),
               }
             : c,
         ),
@@ -307,6 +404,8 @@ export function AppStoreProvider({
       importIcs,
       clearAll,
       updateCourseForm,
+      addManualOccurrence,
+      removeOccurrence,
       markAbsent,
       clearAbsence,
       setAbsenceStatus,
@@ -327,6 +426,8 @@ export function AppStoreProvider({
       importIcs,
       clearAll,
       updateCourseForm,
+      addManualOccurrence,
+      removeOccurrence,
       markAbsent,
       clearAbsence,
       setAbsenceStatus,
