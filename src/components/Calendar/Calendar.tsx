@@ -86,7 +86,11 @@ export function Calendar() {
   const [view, setView] = useState<CalendarView>('week')
   const [anchor, setAnchor] = useState(() => new Date())
   const [activeOcc, setActiveOcc] = useState<Occurrence | null>(null)
-  const [popoverPos, setPopoverPos] = useState<{ x: number; y: number } | null>(null)
+  const [popoverPos, setPopoverPos] = useState<{
+    x: number
+    y: number
+    anchorTop: number
+  } | null>(null)
 
   const hours = useMemo(
     () => Array.from({ length: DAY_END_HOUR - DAY_START_HOUR }, (_, i) => DAY_START_HOUR + i),
@@ -118,8 +122,9 @@ export function Calendar() {
     setSelectedCourseId(occ.courseFormId)
     setActiveOcc(occ)
     setPopoverPos({
-      x: Math.min(rect.left, window.innerWidth - 300),
-      y: Math.min(rect.bottom + 6, window.innerHeight - 360),
+      x: Math.max(12, Math.min(rect.left, window.innerWidth - 312)),
+      y: rect.bottom + 6,
+      anchorTop: rect.top,
     })
   }
 
@@ -303,6 +308,7 @@ export function Calendar() {
           occurrence={activeOcc}
           x={popoverPos.x}
           y={popoverPos.y}
+          anchorTop={popoverPos.anchorTop}
           onClose={() => setActiveOcc(null)}
           onOccurrenceChange={setActiveOcc}
         />

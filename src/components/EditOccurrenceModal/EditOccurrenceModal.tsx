@@ -10,12 +10,14 @@ export function EditOccurrenceModal({
   occurrence,
   onClose,
   onSaved,
+  onDeleted,
 }: {
   occurrence: Occurrence
   onClose: () => void
   onSaved: (occurrence: Occurrence) => void
+  onDeleted?: () => void
 }) {
-  const { getCourse, isExam, updateOccurrence } = useAppStore()
+  const { getCourse, isExam, updateOccurrence, removeOccurrence } = useAppStore()
   const { t } = useLanguage()
   const titleId = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
@@ -58,6 +60,13 @@ export function EditOccurrenceModal({
       return
     }
     onSaved(result.occurrence)
+    onClose()
+  }
+
+  const onDelete = () => {
+    if (!confirm(t('deleteEventConfirm'))) return
+    removeOccurrence(occurrence.id, occurrence.courseFormId)
+    onDeleted?.()
     onClose()
   }
 
@@ -143,12 +152,17 @@ export function EditOccurrenceModal({
           {error && <p className="hint err">{t(error)}</p>}
 
           <div className="add-occ-actions">
-            <button type="button" className="btn ghost" onClick={onClose}>
-              {t('cancel')}
+            <button type="button" className="btn danger" onClick={onDelete}>
+              {t('deleteEvent')}
             </button>
-            <button type="submit" className="btn" disabled={!date}>
-              {t('saveChanges')}
-            </button>
+            <div className="add-occ-actions-end">
+              <button type="button" className="btn ghost" onClick={onClose}>
+                {t('cancel')}
+              </button>
+              <button type="submit" className="btn" disabled={!date}>
+                {t('saveChanges')}
+              </button>
+            </div>
           </div>
         </form>
       </div>
