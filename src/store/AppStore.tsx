@@ -18,6 +18,7 @@ import type {
 import { EMPTY_STATE, createId } from '../types'
 import { defaultStore, type DataStore } from './dataStore'
 import { mergeIcsImport, type ParsedIcsImport } from '../lib/ics'
+import { parseOccurrenceSlot } from '../lib/occurrenceSlot'
 import {
   countUsedAbsences,
   getAbsenceForOccurrence,
@@ -46,6 +47,19 @@ interface AppStoreValue {
     asExam?: boolean
   }) => { ok: true } | { ok: false; error: 'invalidRange' | 'missingCourse' }
   removeOccurrence: (occurrenceId: string, courseFormId: string) => void
+  updateOccurrence: (
+    occurrenceId: string,
+    input: {
+      date: string
+      startTime: string
+      endTime: string
+      title?: string
+      location?: string
+      asExam?: boolean
+    },
+  ) =>
+    | { ok: true; occurrence: Occurrence }
+    | { ok: false; error: 'invalidRange' | 'missingOccurrence' }
   markAbsent: (occurrence: Occurrence) => void
   clearAbsence: (occurrenceId: string, courseFormId: string) => void
   setAbsenceStatus: (courseFormId: string, absenceId: string, status: AbsenceStatus) => void
@@ -167,23 +181,9 @@ export function AppStoreProvider({
       const course = state.courseForms.find((c) => c.id === input.courseFormId)
       if (!course) return { ok: false, error: 'missingCourse' }
 
-      const [y, m, d] = input.date.split('-').map(Number)
-      const [startH, startM] = input.startTime.split(':').map(Number)
-      const [endH, endM] = input.endTime.split(':').map(Number)
-      if (
-        [y, m, d, startH, startM, endH, endM].some((n) => Number.isNaN(n))
-      ) {
-        return { ok: false, error: 'invalidRange' }
-      }
-
-      const startDate = new Date(y, m - 1, d, startH, startM)
-      const endDate = new Date(y, m - 1, d, endH, endM)
-      if (!(endDate.getTime() > startDate.getTime())) {
-        return { ok: false, error: 'invalidRange' }
-      }
-
-      const start = startDate.toISOString()
-      const end = endDate.toISOString()
+      const slot = parseOccurrenceSlot(input.date, input.startTime, input.endTime)
+      if (!slot.ok) return { ok: false, error: 'invalidRange' }
+      const { start, end } = slot
       const occurrenceId = `manual__${createId()}__${start}`
       const title = input.title?.trim() || course.name
       const location = input.location?.trim() || undefined
@@ -237,6 +237,80 @@ export function AppStoreProvider({
             : c,
         ),
       })
+    },
+    [persist, state],
+  )
+
+  const updateOccurrence = useCallback(
+    (
+      occurrenceId: string,
+      input: {
+        date: string
+        startTime: string
+        endTime: string
+        title?: string
+        location?: string
+        asExam?: boolean
+      },
+    ):
+      | { ok: true; occurrence: Occurrence }
+      | { ok: false; error: 'invalidRange' | 'missingOccurrence' } => {
+      const existing = state.occurrences.find((o) => o.id === occurrenceId)
+      if (!existing) return { ok: false, error: 'missingOccurrence' }
+
+      const slot = parseOccurrenceSlot(input.date, input.startTime, input.endTime)
+      if (!slot.ok) return { ok: false, error: 'invalidRange' }
+
+      const course = state.courseForms.find((c) => c.id === existing.courseFormId)
+      const title = input.title?.trim() || course?.name || existing.title
+      const location = input.location?.trim() || undefined
+      const dateKey = slot.start.slice(0, 10)
+
+      const updated: Occurrence = {
+        ...existing,
+        start: slot.start,
+        end: slot.end,
+        title,
+        location,
+        manual: true,
+      }
+
+      const nextForms = state.courseForms.map((c) => {
+        if (c.id !== existing.courseFormId) return c
+
+        let occurrenceOverrides = c.occurrenceOverrides.filter(
+          (o) => o.occurrenceId !== occurrenceId,
+        )
+        const prevOverride = c.occurrenceOverrides.find((o) => o.occurrenceId === occurrenceId)
+        const notes = prevOverride?.notes ?? ''
+
+        if (input.asExam) {
+          occurrenceOverrides = [
+            ...occurrenceOverrides,
+            { occurrenceId, tags: ['exam' as OccurrenceTag], notes },
+          ]
+        } else if (notes.trim()) {
+          occurrenceOverrides = [
+            ...occurrenceOverrides,
+            { occurrenceId, tags: [] as OccurrenceTag[], notes },
+          ]
+        }
+
+        return {
+          ...c,
+          absences: c.absences.map((a) =>
+            a.occurrenceId === occurrenceId ? { ...a, date: dateKey } : a,
+          ),
+          occurrenceOverrides,
+        }
+      })
+
+      persist({
+        ...state,
+        courseForms: nextForms,
+        occurrences: state.occurrences.map((o) => (o.id === occurrenceId ? updated : o)),
+      })
+      return { ok: true, occurrence: updated }
     },
     [persist, state],
   )
@@ -416,6 +490,7 @@ export function AppStoreProvider({
       updateCourseForm,
       addManualOccurrence,
       removeOccurrence,
+      updateOccurrence,
       markAbsent,
       clearAbsence,
       setAbsenceStatus,
@@ -439,6 +514,7 @@ export function AppStoreProvider({
       updateCourseForm,
       addManualOccurrence,
       removeOccurrence,
+      updateOccurrence,
       markAbsent,
       clearAbsence,
       setAbsenceStatus,

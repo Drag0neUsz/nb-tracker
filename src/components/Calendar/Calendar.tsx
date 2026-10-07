@@ -304,6 +304,7 @@ export function Calendar() {
           x={popoverPos.x}
           y={popoverPos.y}
           onClose={() => setActiveOcc(null)}
+          onOccurrenceChange={setActiveOcc}
         />
       )}
 

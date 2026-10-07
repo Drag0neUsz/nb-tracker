@@ -89,6 +89,9 @@ export const translations = {
     weekdaysShort: ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd'],
 
     classActions: 'Akcje zajęć',
+    closePopover: 'Zamknij',
+    editEvent: 'Edytuj zdarzenie',
+    saveChanges: 'Zapisz zmiany',
     absencesStat: 'Nieobecności: {used}/{max} (zostało {left})',
     occNotesPlaceholder: 'Zadania, przygotowanie, przypomnienia…',
     clearAbsence: 'Usuń nieobecność',
@@ -183,6 +186,9 @@ export const translations = {
     weekdaysShort: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
 
     classActions: 'Class actions',
+    closePopover: 'Close',
+    editEvent: 'Edit event',
+    saveChanges: 'Save changes',
     absencesStat: 'Absences: {used}/{max} ({left} left)',
     occNotesPlaceholder: 'Homework due, prep, reminders…',
     clearAbsence: 'Clear absence',
