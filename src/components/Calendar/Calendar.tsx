@@ -28,6 +28,9 @@ const WEEK_STARTS_ON = 1 as const // Monday
 const DAY_START_HOUR = 7
 const DAY_END_HOUR = 21
 const HOUR_HEIGHT = 56
+/** Max chips per month cell; if more, show 3 chips + a "+N" overflow control. */
+const MONTH_CHIP_SLOTS = 4
+const MONTH_CHIP_VISIBLE_WHEN_OVERFLOW = 3
 
 function weekDays(anchor: Date) {
   const start = startOfWeek(anchor, { weekStartsOn: WEEK_STARTS_ON })
@@ -44,10 +47,10 @@ function minutesSinceDayStart(date: Date) {
   return (date.getHours() - DAY_START_HOUR) * 60 + date.getMinutes()
 }
 
-function NotesIcon() {
+function NotesIcon({ className = 'tile-notes-icon' }: { className?: string }) {
   return (
     <svg
-      className="tile-notes-icon"
+      className={className}
       viewBox="0 0 16 16"
       width="12"
       height="12"
@@ -80,6 +83,17 @@ function WarningIcon({ className = 'tile-warning-icon' }: { className?: string }
   )
 }
 
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M3.2 3.2a.75.75 0 0 1 1.06 0L8 6.94l3.74-3.74a.75.75 0 1 1 1.06 1.06L9.06 8l3.74 3.74a.75.75 0 1 1-1.06 1.06L8 9.06l-3.74 3.74a.75.75 0 1 1-1.06-1.06L6.94 8 3.2 4.26a.75.75 0 0 1 0-1.06Z"
+      />
+    </svg>
+  )
+}
+
 export function Calendar() {
   const { state, getCourse, isAbsent, setSelectedCourseId, getOccurrenceNotes } = useAppStore()
   const { t, dateLocale, weekdaysShort } = useLanguage()
@@ -91,6 +105,17 @@ export function Calendar() {
     y: number
     anchorTop: number
   } | null>(null)
+  const [dayList, setDayList] = useState<{
+    dayKey: string
+    occurrences: Occurrence[]
+    x: number
+    y: number
+  } | null>(null)
+
+  const closeOverlays = () => {
+    setActiveOcc(null)
+    setDayList(null)
+  }
 
   const hours = useMemo(
     () => Array.from({ length: DAY_END_HOUR - DAY_START_HOUR }, (_, i) => DAY_START_HOUR + i),
@@ -119,6 +144,7 @@ export function Calendar() {
   const openPopover = (occ: Occurrence, e: MouseEvent) => {
     e.stopPropagation()
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    setDayList(null)
     setSelectedCourseId(occ.courseFormId)
     setActiveOcc(occ)
     setPopoverPos({
@@ -128,13 +154,26 @@ export function Calendar() {
     })
   }
 
+  const openDayList = (dayOccs: Occurrence[], dayKey: string, e: MouseEvent) => {
+    e.stopPropagation()
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const estimatedHeight = Math.min(320, 48 + dayOccs.length * 42)
+    const x = Math.max(12, Math.min(rect.left, window.innerWidth - 280))
+    let y = rect.bottom + 6
+    if (y + estimatedHeight > window.innerHeight - 12) {
+      y = Math.max(12, rect.top - estimatedHeight - 6)
+    }
+    setActiveOcc(null)
+    setDayList({ dayKey, occurrences: dayOccs, x, y })
+  }
+
   const title =
     view === 'week'
       ? `${format(days[0], 'd MMM', { locale: dateLocale })} – ${format(days[6], 'd MMM yyyy', { locale: dateLocale })}`
       : format(anchor, 'LLLL yyyy', { locale: dateLocale })
 
   return (
-    <section className="calendar" onClick={() => setActiveOcc(null)}>
+    <section className="calendar" onClick={closeOverlays}>
       <header className="calendar-toolbar">
         <div className="calendar-nav">
           <button type="button" className="btn ghost" onClick={goPrev} aria-label={t('previous')}>
@@ -254,17 +293,25 @@ export function Calendar() {
             </div>
           ))}
           {days.map((day) => {
+            const dayKey = day.toISOString()
             const dayOccs = occurrencesInRange.filter((o) =>
               isSameDay(parseISO(o.start), day),
             )
+            const overflow = dayOccs.length > MONTH_CHIP_SLOTS
+            const visibleOccs = overflow
+              ? dayOccs.slice(0, MONTH_CHIP_VISIBLE_WHEN_OVERFLOW)
+              : dayOccs
+            const hiddenCount = overflow
+              ? dayOccs.length - MONTH_CHIP_VISIBLE_WHEN_OVERFLOW
+              : 0
             return (
               <div
-                key={day.toISOString()}
+                key={dayKey}
                 className={`month-cell${!isSameMonth(day, anchor) ? ' muted' : ''}${isToday(day) ? ' today' : ''}`}
               >
                 <span className="month-date">{format(day, 'd')}</span>
                 <div className="month-chips">
-                  {dayOccs.map((occ) => {
+                  {visibleOccs.map((occ) => {
                     const course = getCourse(occ.courseFormId)
                     const color = tileColorFor(course, occ.id)
                     const palette = TILE_COLORS[color]
@@ -296,10 +343,74 @@ export function Calendar() {
                       </button>
                     )
                   })}
+                  {overflow && (
+                    <button
+                      type="button"
+                      className={`month-chip-more${dayList?.dayKey === dayKey ? ' open' : ''}`}
+                      aria-label={t('moreClassesAria', { count: hiddenCount })}
+                      title={t('moreClassesAria', { count: hiddenCount })}
+                      onClick={(e) => openDayList(dayOccs, dayKey, e)}
+                    >
+                      {t('moreClasses', { count: hiddenCount })}
+                    </button>
+                  )}
                 </div>
               </div>
             )
           })}
+        </div>
+      )}
+
+      {dayList && (
+        <div
+          className="month-day-list"
+          style={{ left: dayList.x, top: dayList.y }}
+          role="dialog"
+          aria-label={t('dayClasses')}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="month-day-list-close"
+            aria-label={t('closePopover')}
+            title={t('closePopover')}
+            onClick={() => setDayList(null)}
+          >
+            <CloseIcon />
+          </button>
+          <div className="month-day-list-head">{t('dayClasses')}</div>
+          <ul className="month-day-list-items">
+            {dayList.occurrences.map((occ) => {
+              const course = getCourse(occ.courseFormId)
+              const color = tileColorFor(course, occ.id)
+              const palette = TILE_COLORS[color]
+              const absent = isAbsent(occ.id, occ.courseFormId)
+              const hasNotes = getOccurrenceNotes(occ.id, occ.courseFormId).trim().length > 0
+              const overLimit = course ? isOverAbsenceLimit(course) : false
+              const label = course?.shortName ?? course?.name ?? occ.title
+              return (
+                <li key={occ.id}>
+                  <button
+                    type="button"
+                    className={`month-day-list-item${absent ? ' absent' : ''}${overLimit ? ' over-limit' : ''}`}
+                    style={{
+                      background: palette.bg,
+                      borderColor: palette.border,
+                      color: palette.text,
+                    }}
+                    onClick={(e) => openPopover(occ, e)}
+                  >
+                    <span className="month-day-list-time">
+                      {format(parseISO(occ.start), 'HH:mm')}
+                    </span>
+                    <span className="month-day-list-title">{label}</span>
+                    {overLimit && <WarningIcon className="month-day-list-icon" />}
+                    {hasNotes && <NotesIcon className="month-day-list-icon" />}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
         </div>
       )}
 

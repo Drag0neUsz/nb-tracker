@@ -97,6 +97,9 @@ export const translations = {
     exam: 'Egzamin',
     hasNotes: 'ma notatki',
     overAbsenceLimit: 'przekroczony limit nieobecności',
+    moreClasses: '+{count}',
+    moreClassesAria: 'Pokaż {count} więcej zajęć',
+    dayClasses: 'Zajęcia tego dnia',
     weekdaysShort: ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd'],
 
     classActions: 'Akcje zajęć',
@@ -208,6 +211,9 @@ export const translations = {
     exam: 'Exam',
     hasNotes: 'has notes',
     overAbsenceLimit: 'over absence limit',
+    moreClasses: '+{count}',
+    moreClassesAria: 'Show {count} more classes',
+    dayClasses: 'Classes this day',
     weekdaysShort: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
 
     classActions: 'Class actions',
