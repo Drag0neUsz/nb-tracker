@@ -9,9 +9,10 @@ import {
   serializeJsonBackup,
 } from '../../lib/jsonBackup'
 import { countUsedAbsences, isOverAbsenceLimit, remainingAbsences } from '../../lib/attendance'
-import type { AbsenceStatus } from '../../types'
+import type { AbsenceStatus, AppState } from '../../types'
 import type { MessageParams, TranslationKey } from '../../i18n/translations'
 import { AddOccurrenceModal } from '../AddOccurrenceModal/AddOccurrenceModal'
+import { JsonImportModal } from '../JsonImportModal/JsonImportModal'
 import './SidePanel.css'
 
 type StatusMessage =
@@ -52,6 +53,7 @@ export function SidePanel() {
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<StatusMessage | null>(null)
   const [addOpen, setAddOpen] = useState(false)
+  const [jsonImport, setJsonImport] = useState<AppState | null>(null)
 
   const selected = state.courseForms.find((c) => c.id === selectedCourseId)
   const manualOccurrences = selected
@@ -156,21 +158,12 @@ export function SidePanel() {
 
   const onJsonFile = async (file: File | null) => {
     if (!file) return
-    if (!confirm(t('jsonImportConfirm'))) return
     setBusy(true)
     setStatus(null)
     try {
       const text = await file.text()
-      const next = parseJsonBackup(text)
-      replaceState(next)
-      setStatus({
-        kind: 'ok',
-        key: 'importedJson',
-        params: {
-          courses: next.courseForms.length,
-          classes: next.occurrences.length,
-        },
-      })
+      const parsed = parseJsonBackup(text)
+      setJsonImport(parsed)
     } catch (e) {
       const message = e instanceof Error ? e.message : ''
       setStatus(
@@ -183,6 +176,22 @@ export function SidePanel() {
     } finally {
       setBusy(false)
     }
+  }
+
+  const onJsonImportConfirm = (
+    next: AppState,
+    stats: { courses: number; classes: number },
+  ) => {
+    replaceState(next)
+    setJsonImport(null)
+    setStatus({
+      kind: 'ok',
+      key: 'importedJson',
+      params: {
+        courses: stats.courses,
+        classes: stats.classes,
+      },
+    })
   }
 
   const statusText =
@@ -465,6 +474,15 @@ export function SidePanel() {
           course={selected}
           onClose={() => setAddOpen(false)}
           onAdded={() => setStatus({ kind: 'ok', key: 'dateAdded' })}
+        />
+      )}
+
+      {jsonImport && (
+        <JsonImportModal
+          imported={jsonImport}
+          current={state}
+          onClose={() => setJsonImport(null)}
+          onConfirm={onJsonImportConfirm}
         />
       )}
     </aside>

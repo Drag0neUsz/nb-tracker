@@ -89,3 +89,78 @@ export function downloadJsonFile(
   anchor.remove()
   URL.revokeObjectURL(url)
 }
+
+export interface JsonImportSelection {
+  /** Course form ids included in the import. */
+  courseIds: Set<string>
+  /** Occurrence ids included in the import. */
+  occurrenceIds: Set<string>
+}
+
+/** Build app state from an imported backup using hierarchical course/occurrence selection. */
+export function filterImportedState(
+  imported: AppState,
+  selection: JsonImportSelection,
+): AppState {
+  const courseForms = imported.courseForms
+    .filter((c) => selection.courseIds.has(c.id))
+    .map((course) => {
+      const keptOccIds = new Set(
+        imported.occurrences
+          .filter(
+            (o) =>
+              o.courseFormId === course.id && selection.occurrenceIds.has(o.id),
+          )
+          .map((o) => o.id),
+      )
+      return {
+        ...course,
+        absences: course.absences.filter((a) => keptOccIds.has(a.occurrenceId)),
+        occurrenceOverrides: course.occurrenceOverrides.filter((o) =>
+          keptOccIds.has(o.occurrenceId),
+        ),
+      }
+    })
+
+  const keptCourseIds = new Set(courseForms.map((c) => c.id))
+  const occurrences = imported.occurrences.filter(
+    (o) =>
+      keptCourseIds.has(o.courseFormId) && selection.occurrenceIds.has(o.id),
+  )
+
+  return {
+    version: 1,
+    courseForms,
+    occurrences,
+  }
+}
+
+/**
+ * Merge selected imported data into the current app state.
+ * Selected courses overwrite matching ids (or are added); other local courses stay.
+ * For each selected course, its calendar occurrences are replaced by the selected imported ones.
+ */
+export function mergeSelectiveImport(
+  current: AppState,
+  imported: AppState,
+  selection: JsonImportSelection,
+): AppState {
+  const filtered = filterImportedState(imported, selection)
+  if (filtered.courseForms.length === 0) return current
+
+  const importedCourseIds = new Set(filtered.courseForms.map((c) => c.id))
+  const formsById = new Map(current.courseForms.map((c) => [c.id, c]))
+  for (const course of filtered.courseForms) {
+    formsById.set(course.id, course)
+  }
+
+  const keptOccurrences = current.occurrences.filter(
+    (o) => !importedCourseIds.has(o.courseFormId),
+  )
+
+  return {
+    version: 1,
+    courseForms: [...formsById.values()],
+    occurrences: [...keptOccurrences, ...filtered.occurrences],
+  }
+}
