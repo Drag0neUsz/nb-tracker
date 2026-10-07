@@ -3,6 +3,11 @@ import { format, parseISO } from 'date-fns'
 import { useAppStore } from '../../store/AppStore'
 import { useLanguage } from '../../i18n/LanguageContext'
 import { fetchIcsFromUrl, parseIcsText, buildIcsExport, downloadIcsFile } from '../../lib/ics'
+import {
+  downloadJsonFile,
+  parseJsonBackup,
+  serializeJsonBackup,
+} from '../../lib/jsonBackup'
 import { countUsedAbsences, isOverAbsenceLimit, remainingAbsences } from '../../lib/attendance'
 import type { AbsenceStatus } from '../../types'
 import type { MessageParams, TranslationKey } from '../../i18n/translations'
@@ -33,6 +38,7 @@ export function SidePanel() {
     selectedCourseId,
     setSelectedCourseId,
     importIcs,
+    replaceState,
     clearAll,
     updateCourseForm,
     removeOccurrence,
@@ -110,7 +116,7 @@ export function SidePanel() {
     setStatus({ kind: 'ok', key: 'cleared' })
   }
 
-  const onExport = () => {
+  const onExportIcs = () => {
     if (state.occurrences.length === 0) {
       setStatus({ kind: 'err', key: 'nothingToExport' })
       return
@@ -131,6 +137,54 @@ export function SidePanel() {
     }
   }
 
+  const onExportJson = () => {
+    if (state.courseForms.length === 0 && state.occurrences.length === 0) {
+      setStatus({ kind: 'err', key: 'nothingToExport' })
+      return
+    }
+    try {
+      downloadJsonFile(serializeJsonBackup(state))
+      setStatus({ kind: 'ok', key: 'exportedJson' })
+    } catch (e) {
+      setStatus(
+        e instanceof Error
+          ? { kind: 'err', raw: e.message }
+          : { kind: 'err', key: 'nothingToExport' },
+      )
+    }
+  }
+
+  const onJsonFile = async (file: File | null) => {
+    if (!file) return
+    if (!confirm(t('jsonImportConfirm'))) return
+    setBusy(true)
+    setStatus(null)
+    try {
+      const text = await file.text()
+      const next = parseJsonBackup(text)
+      replaceState(next)
+      setStatus({
+        kind: 'ok',
+        key: 'importedJson',
+        params: {
+          courses: next.courseForms.length,
+          classes: next.occurrences.length,
+        },
+      })
+    } catch (e) {
+      const message = e instanceof Error ? e.message : ''
+      setStatus(
+        message === 'jsonInvalid'
+          ? { kind: 'err', key: 'jsonInvalid' }
+          : e instanceof Error
+            ? { kind: 'err', raw: e.message }
+            : { kind: 'err', key: 'failedImportFile' },
+      )
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const statusText =
     status == null
       ? null
@@ -147,24 +201,53 @@ export function SidePanel() {
 
       <section className="panel-section">
         <h3>{t('importCalendar')}</h3>
-        <label className="file-btn btn">
-          {busy ? t('working') : t('uploadIcs')}
-          <input
-            type="file"
-            accept=".ics,text/calendar"
-            hidden
-            disabled={busy}
-            onChange={(e) => void onFile(e.target.files?.[0] ?? null)}
-          />
-        </label>
-        <button
-          type="button"
-          className="btn export-btn"
-          disabled={busy || state.occurrences.length === 0}
-          onClick={onExport}
-        >
-          {t('exportIcs')}
-        </button>
+        <div className="io-grid">
+          <label className="file-btn btn">
+            {busy ? t('working') : t('uploadIcs')}
+            <input
+              type="file"
+              accept=".ics,text/calendar"
+              hidden
+              disabled={busy}
+              onChange={(e) => {
+                void onFile(e.target.files?.[0] ?? null)
+                e.target.value = ''
+              }}
+            />
+          </label>
+          <button
+            type="button"
+            className="btn"
+            disabled={busy || state.occurrences.length === 0}
+            onClick={onExportIcs}
+          >
+            {t('exportIcs')}
+          </button>
+          <label className="file-btn btn">
+            {busy ? t('working') : t('uploadJson')}
+            <input
+              type="file"
+              accept=".json,application/json"
+              hidden
+              disabled={busy}
+              onChange={(e) => {
+                void onJsonFile(e.target.files?.[0] ?? null)
+                e.target.value = ''
+              }}
+            />
+          </label>
+          <button
+            type="button"
+            className="btn"
+            disabled={
+              busy ||
+              (state.courseForms.length === 0 && state.occurrences.length === 0)
+            }
+            onClick={onExportJson}
+          >
+            {t('exportJson')}
+          </button>
+        </div>
         <div className="url-row">
           <input
             type="url"

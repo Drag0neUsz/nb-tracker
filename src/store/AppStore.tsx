@@ -33,6 +33,7 @@ interface AppStoreValue {
   selectedCourseId: string | null
   setSelectedCourseId: (id: string) => void
   importIcs: (parsed: ParsedIcsImport) => void
+  replaceState: (next: AppState) => void
   clearAll: () => Promise<void>
   updateCourseForm: (id: string, patch: Partial<Pick<CourseForm, 'maxAbsences' | 'notes' | 'name' | 'shortName'>>) => void
   addManualOccurrence: (input: {
@@ -113,6 +114,14 @@ export function AppStoreProvider({
       persist(mergeIcsImport(state, parsed))
     },
     [persist, state],
+  )
+
+  const replaceState = useCallback(
+    (next: AppState) => {
+      persist(next)
+      setSelectedCourseIdState(next.courseForms[0]?.id ?? null)
+    },
+    [persist],
   )
 
   const clearAll = useCallback(async () => {
@@ -402,6 +411,7 @@ export function AppStoreProvider({
       selectedCourseId,
       setSelectedCourseId,
       importIcs,
+      replaceState,
       clearAll,
       updateCourseForm,
       addManualOccurrence,
@@ -424,6 +434,7 @@ export function AppStoreProvider({
       selectedCourseId,
       setSelectedCourseId,
       importIcs,
+      replaceState,
       clearAll,
       updateCourseForm,
       addManualOccurrence,

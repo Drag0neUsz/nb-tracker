@@ -1,5 +1,6 @@
 import type { AppState } from '../types'
 import { EMPTY_STATE } from '../types'
+import { normalizeAppState } from '../lib/jsonBackup'
 
 export interface DataStore {
   load(): Promise<AppState>
@@ -14,22 +15,7 @@ export class LocalStorageStore implements DataStore {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (!raw) return { ...EMPTY_STATE }
-      const parsed = JSON.parse(raw) as AppState
-      if (parsed?.version !== 1 || !Array.isArray(parsed.courseForms)) {
-        return { ...EMPTY_STATE }
-      }
-      return {
-        version: 1,
-        courseForms: (parsed.courseForms ?? []).map((course) => ({
-          ...course,
-          absences: (course.absences ?? []).map((absence) => ({
-            ...absence,
-            status:
-              absence.status === 'justified' ? ('justified' as const) : ('absent' as const),
-          })),
-        })),
-        occurrences: parsed.occurrences ?? [],
-      }
+      return normalizeAppState(JSON.parse(raw)) ?? { ...EMPTY_STATE }
     } catch {
       return { ...EMPTY_STATE }
     }
