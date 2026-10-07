@@ -22,6 +22,10 @@
   --tile-red-bg: #f8d4d4;
   --tile-red-border: #c24b4b;
   --tile-red-text: #7a1f1f;
+  --tile-gray-bg: #e6eaed;
+  --tile-gray-stripe: #d2d8dd;
+  --tile-gray-border: #9aa5ad;
+  --tile-gray-text: #4a5560;
 }
 
 * {

@@ -33,10 +33,16 @@ export function isEmptyOverride(override: {
   return override.tags.length === 0 && !(override.notes ?? '').trim()
 }
 
+export function isLimitEnforced(course: CourseForm): boolean {
+  return course.limitEnabled !== false
+}
+
 export function remainingAbsences(course: CourseForm): number {
+  if (!isLimitEnforced(course)) return Number.POSITIVE_INFINITY
   return Math.max(0, course.maxAbsences - countUsedAbsences(course))
 }
 
 export function isOverAbsenceLimit(course: CourseForm): boolean {
+  if (!isLimitEnforced(course)) return false
   return countUsedAbsences(course) > course.maxAbsences
 }

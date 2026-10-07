@@ -471,6 +471,15 @@
   border-color: var(--tile-red-border);
 }
 
+.calendar-legend .swatch.gray {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--tile-gray-bg) 0 3px,
+    var(--tile-gray-stripe) 3px 6px
+  );
+  border-color: var(--tile-gray-border);
+}
+
 @media (max-width: 900px) {
   .calendar-toolbar {
     flex-wrap: wrap;

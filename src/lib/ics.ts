@@ -117,6 +117,7 @@ export function parseIcsText(
         type,
         shortName: shortNameFrom(name, type),
         maxAbsences: 2,
+        limitEnabled: true,
         notes: '',
         absences: [],
         occurrenceOverrides: [],

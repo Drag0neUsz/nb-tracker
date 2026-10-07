@@ -36,7 +36,10 @@ interface AppStoreValue {
   importIcs: (parsed: ParsedIcsImport) => void
   replaceState: (next: AppState) => void
   clearAll: () => Promise<void>
-  updateCourseForm: (id: string, patch: Partial<Pick<CourseForm, 'maxAbsences' | 'notes' | 'name' | 'shortName'>>) => void
+  updateCourseForm: (
+    id: string,
+    patch: Partial<Pick<CourseForm, 'maxAbsences' | 'limitEnabled' | 'notes' | 'name' | 'shortName'>>,
+  ) => void
   addManualOccurrence: (input: {
     courseFormId: string
     date: string
@@ -147,7 +150,9 @@ export function AppStoreProvider({
   const updateCourseForm = useCallback(
     (
       id: string,
-      patch: Partial<Pick<CourseForm, 'maxAbsences' | 'notes' | 'name' | 'shortName'>>,
+      patch: Partial<
+        Pick<CourseForm, 'maxAbsences' | 'limitEnabled' | 'notes' | 'name' | 'shortName'>
+      >,
     ) => {
       persist({
         ...state,
@@ -160,6 +165,8 @@ export function AppStoreProvider({
                   patch.maxAbsences !== undefined
                     ? Math.max(0, Math.floor(patch.maxAbsences))
                     : c.maxAbsences,
+                limitEnabled:
+                  patch.limitEnabled !== undefined ? Boolean(patch.limitEnabled) : c.limitEnabled,
               }
             : c,
         ),
@@ -457,6 +464,7 @@ export function AppStoreProvider({
     (courseFormId: string) => {
       const course = state.courseForms.find((c) => c.id === courseFormId)
       if (!course) return 0
+      if (course.limitEnabled === false) return Number.POSITIVE_INFINITY
       return Math.max(0, course.maxAbsences - countUsedAbsences(course))
     },
     [state.courseForms],

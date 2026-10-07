@@ -317,6 +317,7 @@ export function Calendar() {
       <div className="calendar-legend" aria-label={t('colorLegend')}>
         <span><i className="swatch green" /> {t('canSkip')}</span>
         <span><i className="swatch orange" /> {t('capUsed')}</span>
+        <span><i className="swatch gray" /> {t('noLimit')}</span>
         <span><i className="swatch red" /> {t('exam')}</span>
       </div>
     </section>

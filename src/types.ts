@@ -24,6 +24,8 @@ export interface CourseForm {
   type?: string
   shortName: string
   maxAbsences: number
+  /** When false, maxAbsences is kept but not enforced for coloring / over-limit. */
+  limitEnabled: boolean
   notes: string
   absences: Absence[]
   occurrenceOverrides: OccurrenceOverride[]

@@ -147,11 +147,15 @@ export function OccurrencePopover({
         </p>
         {course && (
           <p className="occ-meta">
-            {t('absencesStat', {
-              used: course.absences.filter((a) => a.status === 'absent').length,
-              max: course.maxAbsences,
-              left: remaining,
-            })}
+            {course.limitEnabled === false
+              ? t('absencesStatNoLimit', {
+                  used: course.absences.filter((a) => a.status === 'absent').length,
+                })
+              : t('absencesStat', {
+                  used: course.absences.filter((a) => a.status === 'absent').length,
+                  max: course.maxAbsences,
+                  left: Number.isFinite(remaining) ? remaining : 0,
+                })}
           </p>
         )}
 

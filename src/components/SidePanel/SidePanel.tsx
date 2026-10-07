@@ -290,19 +290,37 @@ export function SidePanel() {
             />
           </label>
 
-          <label className="field">
-            {t('maxAbsences')}
-            <input
-              type="number"
-              min={0}
-              value={selected.maxAbsences}
-              onChange={(e) =>
-                updateCourseForm(selected.id, {
-                  maxAbsences: Number(e.target.value),
-                })
-              }
-            />
-          </label>
+          <div className="field limit-field">
+            <div className="section-row">
+              <span>{t('maxAbsences')}</span>
+              <label className="limit-toggle">
+                <input
+                  type="checkbox"
+                  role="switch"
+                  checked={selected.limitEnabled !== false}
+                  aria-label={t('enforceLimit')}
+                  onChange={(e) =>
+                    updateCourseForm(selected.id, {
+                      limitEnabled: e.target.checked,
+                    })
+                  }
+                />
+                <span className="limit-toggle-track" aria-hidden="true" />
+              </label>
+            </div>
+            {selected.limitEnabled !== false && (
+              <input
+                type="number"
+                min={0}
+                value={selected.maxAbsences}
+                onChange={(e) =>
+                  updateCourseForm(selected.id, {
+                    maxAbsences: Number(e.target.value),
+                  })
+                }
+              />
+            )}
+          </div>
 
           <label className="field">
             {t('notes')}
@@ -429,6 +447,7 @@ export function SidePanel() {
           <ul className="course-list">
             {state.courseForms.map((course) => {
               const used = countUsedAbsences(course)
+              const limitOn = course.limitEnabled !== false
               const left = remainingAbsences(course)
               const overLimit = isOverAbsenceLimit(course)
               const active = course.id === selectedCourseId
@@ -458,8 +477,10 @@ export function SidePanel() {
                       {course.name}
                       {course.type ? ` · ${course.type}` : ''}
                     </span>
-                    <span className={`course-stat${left <= 0 ? ' depleted' : ''}${overLimit ? ' over-limit' : ''}`}>
-                      {used}/{course.maxAbsences}
+                    <span
+                      className={`course-stat${!limitOn ? ' no-limit' : ''}${limitOn && left <= 0 ? ' depleted' : ''}${overLimit ? ' over-limit' : ''}`}
+                    >
+                      {limitOn ? `${used}/${course.maxAbsences}` : used}
                     </span>
                   </button>
                 </li>

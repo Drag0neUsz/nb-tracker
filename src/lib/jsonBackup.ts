@@ -28,6 +28,7 @@ export function normalizeAppState(raw: unknown): AppState | null {
     shortName: course.shortName ?? '',
     notes: course.notes ?? '',
     maxAbsences: Number.isFinite(course.maxAbsences) ? Math.max(0, Math.floor(course.maxAbsences)) : 2,
+    limitEnabled: course.limitEnabled !== false,
     absences: (course.absences ?? []).map((absence) => ({
       ...absence,
       status:
