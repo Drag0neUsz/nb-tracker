@@ -49,6 +49,20 @@ export const translations = {
       'Wyczyścić wszystkie zapisane przedmioty, nieobecności i dane kalendarza?',
     cleared: 'Wszystkie zapisane dane zostały wyczyszczone.',
 
+    gdriveSync: 'Synchronizacja Google Drive',
+    gdriveHint:
+      'Zaloguj się kontem Google, aby synchronizować dane między urządzeniami (ukryty folder aplikacji na Dysku).',
+    gdriveNotConfigured:
+      'Synchronizacja niedostępna — ustaw VITE_GOOGLE_CLIENT_ID (patrz README).',
+    gdriveSignIn: 'Zaloguj przez Google',
+    gdriveSigningIn: 'Logowanie…',
+    gdriveSignOut: 'Wyloguj',
+    gdriveSyncNow: 'Synchronizuj teraz',
+    gdriveSyncing: 'Synchronizuję…',
+    gdriveSyncedAt: 'Zsynchronizowano: {time}',
+    gdriveError: 'Błąd synchronizacji: {message}',
+    gdriveErrorGeneric: 'Błąd synchronizacji.',
+
     shortName: 'Skrót',
     maxAbsences: 'Limit nieobecności',
     enforceLimit: 'Egzekwuj limit nieobecności',
@@ -162,6 +176,20 @@ export const translations = {
     clearConfirm:
       'Clear all saved courses, absences, and calendar data?',
     cleared: 'All saved data cleared.',
+
+    gdriveSync: 'Google Drive sync',
+    gdriveHint:
+      'Sign in with Google to sync your data across devices (hidden app folder on Drive).',
+    gdriveNotConfigured:
+      'Sync unavailable — set VITE_GOOGLE_CLIENT_ID (see README).',
+    gdriveSignIn: 'Sign in with Google',
+    gdriveSigningIn: 'Signing in…',
+    gdriveSignOut: 'Sign out',
+    gdriveSyncNow: 'Sync now',
+    gdriveSyncing: 'Syncing…',
+    gdriveSyncedAt: 'Synced: {time}',
+    gdriveError: 'Sync error: {message}',
+    gdriveErrorGeneric: 'Sync error.',
 
     shortName: 'Short name',
     maxAbsences: 'Max absences',

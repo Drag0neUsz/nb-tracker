@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { useAppStore } from '../../store/AppStore'
+import { useSync } from '../../store/SyncContext'
 import { useLanguage } from '../../i18n/LanguageContext'
 import { fetchIcsFromUrl, parseIcsText, buildIcsExport, downloadIcsFile } from '../../lib/ics'
 import {
@@ -13,6 +14,7 @@ import type { AbsenceStatus, AppState } from '../../types'
 import type { MessageParams, TranslationKey } from '../../i18n/translations'
 import { AddOccurrenceModal } from '../AddOccurrenceModal/AddOccurrenceModal'
 import { JsonImportModal } from '../JsonImportModal/JsonImportModal'
+import { GDriveSync } from '../GDriveSync/GDriveSync'
 import './SidePanel.css'
 
 type StatusMessage =
@@ -47,6 +49,7 @@ export function SidePanel() {
     clearAbsence,
     isExam,
   } = useAppStore()
+  const { clearRemote } = useSync()
   const { t, dateLocale } = useLanguage()
 
   const [url, setUrl] = useState('')
@@ -114,6 +117,11 @@ export function SidePanel() {
 
   const onClear = async () => {
     if (!confirm(t('clearConfirm'))) return
+    try {
+      await clearRemote()
+    } catch {
+      // Local clear still proceeds if Drive delete fails
+    }
     await clearAll()
     setStatus({ kind: 'ok', key: 'cleared' })
   }
@@ -207,6 +215,8 @@ export function SidePanel() {
         <p className="brand">{t('brand')}</p>
         <p className="tagline">{t('tagline')}</p>
       </div>
+
+      <GDriveSync />
 
       <section className="panel-section">
         <h3>{t('importCalendar')}</h3>
