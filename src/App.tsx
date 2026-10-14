@@ -1,4 +1,5 @@
 import { AppStoreProvider, useAppStore } from './store/AppStore'
+import { SyncProvider } from './store/SyncContext'
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext'
 import { Calendar } from './components/Calendar/Calendar'
 import { SidePanel } from './components/SidePanel/SidePanel'
@@ -18,15 +19,17 @@ function Shell() {
   }
 
   return (
-    <div className="app-shell">
-      <header className="app-topbar">
-        <LanguageSwitcher />
-      </header>
-      <main className="app-main">
-        <Calendar />
-      </main>
-      <SidePanel />
-    </div>
+    <SyncProvider>
+      <div className="app-shell">
+        <header className="app-topbar">
+          <LanguageSwitcher />
+        </header>
+        <main className="app-main">
+          <Calendar />
+        </main>
+        <SidePanel />
+      </div>
+    </SyncProvider>
   )
 }
 

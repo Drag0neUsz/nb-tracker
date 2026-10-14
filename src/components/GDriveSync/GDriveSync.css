@@ -1,0 +1,65 @@
+.gdrive-sync .hint {
+  margin-top: 0;
+}
+
+.gdrive-user {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0.65rem 0 0.55rem;
+}
+
+.gdrive-avatar {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--line);
+}
+
+.gdrive-avatar.placeholder {
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--accent) 14%, var(--panel));
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.gdrive-user-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.gdrive-user-name {
+  font-weight: 650;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gdrive-user-email {
+  font-size: 0.78rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gdrive-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.gdrive-actions .btn {
+  flex: 1 1 auto;
+}
+
+.gdrive-signin {
+  width: 100%;
+}
